@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insta Tools</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.12);
+      --border-hover: rgba(0,0,0,0.25);
+      --text-primary: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #a8a8a3;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --info-bg: #e6f1fb;
+      --info-text: #0c447c;
+      --success-bg: #eaf3de;
+      --success-text: #27500a;
+      --warning-bg: #faeeda;
+      --warning-text: #633806;
+      --danger-bg: #fcebeb;
+      --danger-text: #a32d2d;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --surface: #232320;
+        --border: rgba(255,255,255,0.1);
+        --border-hover: rgba(255,255,255,0.25);
+        --text-primary: #f0ede6;
+        --text-secondary: #a8a8a3;
+        --text-tertiary: #6b6b67;
+        --info-bg: #0c447c;
+        --info-text: #b5d4f4;
+        --success-bg: #27500a;
+        --success-text: #c0dd97;
+        --warning-bg: #633806;
+        --warning-text: #fac775;
+        --danger-bg: #3b1c1c;
+        --danger-text: #f09595;
+      }
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: -0.2px;
+      padding: 18px 0;
+      white-space: nowrap;
+      color: var(--text-primary);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      height: 100%;
+    }
+
+    .tab {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 18px 20px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .tab:hover { color: var(--text-primary); }
+
+    .tab.active {
+      color: var(--text-primary);
+      border-bottom-color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ── Content ── */
+    .content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 16px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ── Common ── */
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 22px; font-weight: 500; letter-spacing: -0.3px; }
+    .page-header p { font-size: 14px; color: var(--text-secondary); margin-top: 6px; line-height: 1.6; }
+
+    .panel {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .panel label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    textarea {
+      width: 100%;
+      resize: vertical;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      color: var(--text-primary);
+      outline: none;
+      line-height: 1.8;
+      transition: border-color 0.15s;
+    }
+
+    textarea:focus { border-color: var(--border-hover); }
+    textarea::placeholder { color: var(--text-tertiary); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 9px 22px;
+      border: 0.5px solid var(--border-hover);
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s, opacity 0.12s;
+    }
+
+    button:hover { background: var(--border); }
+
+    button.primary {
+      background: var(--text-primary);
+      color: var(--bg);
+      border-color: transparent;
+    }
+
+    button.primary:hover { opacity: 0.82; background: var(--text-primary); }
+
+    .badge {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+    }
+
+    .badge-info { background: var(--info-bg); color: var(--info-text); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger-text); }
+
+    /* ── Diff Page ── */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 500px) { .row { grid-template-columns: 1fr; } }
+
+    .row .panel { margin-bottom: 0; }
+
+    .result-panel {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .result-panel.show { display: flex; }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .result-header span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .result-box {
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      padding: 12px 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      color: var(--text-primary);
+      min-height: 60px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.8;
+    }
+
+    .empty {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      font-style: italic;
+      font-family: inherit;
+    }
+
+    .copy-btn { font-size: 12px; padding: 5px 14px; align-self: flex-start; }
+
+    /* ── Follow Page ── */
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2px;
+      margin-bottom: 8px;
+    }
+
+    .list-header span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .list-panel { display: none; }
+    .list-panel.show { display: block; }
+
+    .item {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      transition: border-color 0.12s;
+    }
+
+    .item:hover { border-color: var(--border-hover); }
+
+    .item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .avatar.c0 { background: var(--info-bg); color: var(--info-text); }
+    .avatar.c1 { background: var(--success-bg); color: var(--success-text); }
+    .avatar.c2 { background: var(--warning-bg); color: var(--warning-text); }
+
+    .username { font-size: 14px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .handle { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .follow-btn {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 7px 18px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border-hover);
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.12s;
+    }
+
+    .follow-btn:hover { background: var(--border); }
+
+    .item.done { opacity: 0.4; }
+    .item.done .follow-btn { pointer-events: none; color: var(--text-tertiary); border-color: var(--border); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">Insta Tools</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('diff', this)">팔로워 Diff</button>
+      <button class="tab" onclick="switchTab('follow', this)">팔로우 목록</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── Diff Page ── -->
+    <div class="page active" id="page-diff">
+      <div class="page-header">
+        <h1>팔로워 Diff 추출기</h1>
+        <p>첫 번째 텍스트 기준으로 두 번째에 없는 항목만 추출합니다.<br>개행( ↵ ) 또는 쉼표( , )로 구분하며 순서는 무관합니다.</p>
+      </div>
+
+      <div class="row">
+        <div class="panel">
+          <label>첫 번째 텍스트 (기준)</label>
+          <textarea id="diff-text1" style="height:180px" placeholder="id1&#10;id2&#10;id3&#10;또는 id1, id2, id3"></textarea>
+        </div>
+        <div class="panel">
+          <label>두 번째 텍스트 (비교 대상)</label>
+          <textarea id="diff-text2" style="height:180px" placeholder="id2&#10;id4&#10;id5&#10;또는 id2, id4, id5"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="runDiff()">diff 추출</button>
+        <button onclick="resetDiff()">초기화</button>
+      </div>
+
+      <div class="result-panel" id="diffResult">
+        <div class="result-header">
+          <span>첫 번째 텍스트에만 있는 항목</span>
+          <span class="badge badge-danger" id="diffCount">0개</span>
+        </div>
+        <div class="result-box" id="diffBox"></div>
+        <button class="copy-btn" onclick="copyDiff()">복사</button>
+      </div>
+    </div>
+
+    <!-- ── Follow Page ── -->
+    <div class="page" id="page-follow">
+      <div class="page-header">
+        <h1>팔로우 목록</h1>
+        <p>아이디를 입력하면 팔로우 링크를 목록으로 정리해 드려요.<br>개행( ↵ ) 또는 쉼표( , )로 구분, @ 기호는 자동 제거됩니다.</p>
+      </div>
+
+      <div class="panel">
+        <label>인스타그램 아이디</label>
+        <textarea id="follow-ids" style="height:130px" placeholder="id1&#10;id2&#10;id3&#10;또는 id1, id2, id3"></textarea>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="buildList()">목록 만들기</button>
+        <button onclick="clearFollow()">초기화</button>
+      </div>
+
+      <div class="list-panel" id="listPanel">
+        <div class="list-header">
+          <span>팔로우 목록</span>
+          <span class="badge badge-info" id="followCount">0명</span>
+        </div>
+        <div id="listItems"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ── Tab ── */
+    function switchTab(name, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('page-' + name).classList.add('active');
+    }
+
+    /* ── Diff ── */
+    function parseText(text) {
+      return text.split(/[\n,]/).map(s => s.trim()).filter(s => s.length > 0);
+    }
+
+    function runDiff() {
+      const a = parseText(document.getElementById('diff-text1').value);
+      const b = parseText(document.getElementById('diff-text2').value);
+      const setB = new Set(b);
+      const diff = a.filter(item => !setB.has(item));
+      const panel = document.getElementById('diffResult');
+      const box = document.getElementById('diffBox');
+      panel.classList.add('show');
+      document.getElementById('diffCount').textContent = diff.length + '개';
+      if (diff.length === 0) {
+        box.innerHTML = '<span class="empty">차이 없음 — 모든 항목이 두 번째 텍스트에 존재합니다.</span>';
+      } else {
+        box.textContent = diff.join('\n');
+      }
+    }
+
+    function resetDiff() {
+      document.getElementById('diff-text1').value = '';
+      document.getElementById('diff-text2').value = '';
+      document.getElementById('diffResult').classList.remove('show');
+    }
+
+    function copyDiff() {
+      const text = document.getElementById('diffBox').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = event.target;
+        btn.textContent = '복사 완료';
+        setTimeout(() => { btn.textContent = '복사'; }, 1500);
+      });
+    }
+
+    /* ── Follow ── */
+    function getInitial(id) {
+      return (id.replace(/[^a-zA-Z가-힣]/g, '')[0] || id[0] || '?').toUpperCase();
+    }
+
+    function parseIds(text) {
+      return text.split(/[\n,]/).map(s => s.trim().replace(/^@/, '')).filter(s => s.length > 0);
+    }
+
+    function buildList() {
+      const ids = parseIds(document.getElementById('follow-ids').value);
+      const panel = document.getElementById('listPanel');
+      const container = document.getElementById('listItems');
+      if (ids.length === 0) return;
+      panel.classList.add('show');
+      document.getElementById('followCount').textContent = ids.length + '명';
+      container.innerHTML = '';
+      ids.forEach((id, i) => {
+        const colorClass = 'c' + (i % 3);
+        const url = 'https://www.instagram.com/' + id + '/';
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.id = 'fitem-' + i;
+        div.innerHTML = `
+          <div class="item-left">
+            <div class="avatar ${colorClass}">${getInitial(id)}</div>
+            <div>
+              <div class="username">@${id}</div>
+              <div class="handle">instagram.com/${id}</div>
+            </div>
+          </div>
+          <button class="follow-btn" onclick="openInstagram('${url}', ${i})">팔로우</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function openInstagram(url, i) {
+      const w = 480, h = 700;
+      const left = window.screenX + window.outerWidth - w - 20;
+      const top = window.screenY + 60;
+      window.open(url, 'instagram_popup', `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`);
+      setTimeout(() => {
+        const item = document.getElementById('fitem-' + i);
+        if (item) {
+          item.classList.add('done');
+          item.querySelector('.follow-btn').textContent = '완료';
+        }
+      }, 300);
+    }
+
+    function clearFollow() {
+      document.getElementById('follow-ids').value = '';
+      document.getElementById('listPanel').classList.remove('show');
+      document.getElementById('listItems').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
