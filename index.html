@@ -204,6 +204,57 @@
 
     .row .panel { margin-bottom: 0; }
 
+    .input-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 0.5px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .input-tab {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      margin-bottom: -0.5px;
+    }
+
+    .input-tab.active { color: var(--text-primary); border-bottom-color: var(--text-primary); }
+    .input-tab:hover { color: var(--text-primary); background: transparent; }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border-hover);
+      border-radius: var(--radius-md);
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      display: none;
+    }
+
+    .drop-zone.visible { display: block; }
+    .drop-zone.dragover { background: var(--info-bg); border-color: var(--info-text); }
+    .drop-zone p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .drop-zone .drop-icon { font-size: 22px; display: block; margin-bottom: 8px; }
+
+    .file-loaded {
+      font-size: 12px;
+      color: var(--success-text);
+      background: var(--success-bg);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .file-loaded.show { display: block; }
+
     .result-panel {
       background: var(--surface);
       border: 0.5px solid var(--border);
@@ -350,17 +401,46 @@
     <div class="page active" id="page-diff">
       <div class="page-header">
         <h1>팔로워 Diff 추출기</h1>
-        <p>첫 번째 텍스트 기준으로 두 번째에 없는 항목만 추출합니다.<br>개행( ↵ ) 또는 쉼표( , )로 구분하며 순서는 무관합니다.</p>
+        <p>첫 번째 기준으로 두 번째에 없는 항목만 추출합니다.<br>텍스트 직접 입력 또는 인스타그램 JSON 파일 업로드 가능합니다.</p>
       </div>
 
       <div class="row">
+        <!-- 첫번째 패널 -->
         <div class="panel">
-          <label>첫 번째 텍스트 (기준)</label>
-          <textarea id="diff-text1" style="height:180px" placeholder="id1&#10;id2&#10;id3&#10;또는 id1, id2, id3"></textarea>
+          <div class="input-tabs">
+            <button class="input-tab active" onclick="switchInput('1','text',this)">텍스트</button>
+            <button class="input-tab" onclick="switchInput('1','json',this)">JSON 파일</button>
+          </div>
+          <textarea id="diff-text1" style="height:160px" placeholder="아이디를 입력하세요&#10;개행 또는 쉼표로 구분"></textarea>
+          <div class="drop-zone" id="drop1"
+            onclick="document.getElementById('file1').click()"
+            ondragover="onDragOver(event,'drop1')"
+            ondragleave="onDragLeave('drop1')"
+            ondrop="onDrop(event,'1')">
+            <span class="drop-icon">📂</span>
+            <p>클릭하거나 JSON 파일을 여기에 드래그하세요<br><small style="color:var(--text-tertiary)">followers_1.json 등 인스타 JSON 파일</small></p>
+            <input type="file" id="file1" accept=".json" style="display:none" onchange="onFileChange(event,'1')">
+          </div>
+          <div class="file-loaded" id="file1-loaded"></div>
         </div>
+
+        <!-- 두번째 패널 -->
         <div class="panel">
-          <label>두 번째 텍스트 (비교 대상)</label>
-          <textarea id="diff-text2" style="height:180px" placeholder="id2&#10;id4&#10;id5&#10;또는 id2, id4, id5"></textarea>
+          <div class="input-tabs">
+            <button class="input-tab active" onclick="switchInput('2','text',this)">텍스트</button>
+            <button class="input-tab" onclick="switchInput('2','json',this)">JSON 파일</button>
+          </div>
+          <textarea id="diff-text2" style="height:160px" placeholder="아이디를 입력하세요&#10;개행 또는 쉼표로 구분"></textarea>
+          <div class="drop-zone" id="drop2"
+            onclick="document.getElementById('file2').click()"
+            ondragover="onDragOver(event,'drop2')"
+            ondragleave="onDragLeave('drop2')"
+            ondrop="onDrop(event,'2')">
+            <span class="drop-icon">📂</span>
+            <p>클릭하거나 JSON 파일을 여기에 드래그하세요<br><small style="color:var(--text-tertiary)">following.json 등 인스타 JSON 파일</small></p>
+            <input type="file" id="file2" accept=".json" style="display:none" onchange="onFileChange(event,'2')">
+          </div>
+          <div class="file-loaded" id="file2-loaded"></div>
         </div>
       </div>
 
@@ -371,7 +451,7 @@
 
       <div class="result-panel" id="diffResult">
         <div class="result-header">
-          <span>첫 번째 텍스트에만 있는 항목</span>
+          <span>첫 번째에만 있는 항목</span>
           <span class="badge badge-danger" id="diffCount">0개</span>
         </div>
         <div class="result-box" id="diffBox"></div>
@@ -388,7 +468,7 @@
 
       <div class="panel">
         <label>인스타그램 아이디</label>
-        <textarea id="follow-ids" style="height:130px" placeholder="id1&#10;id2&#10;id3&#10;또는 id1, id2, id3"></textarea>
+        <textarea id="follow-ids" style="height:130px" placeholder="dear.dodo__&#10;yoo_2han&#10;belugawoong&#10;또는 id1, id2, id3"></textarea>
       </div>
 
       <div class="actions">
@@ -417,13 +497,94 @@
     }
 
     /* ── Diff ── */
+    const jsonData = { '1': null, '2': null };
+
+    function switchInput(num, mode, el) {
+      const panel = el.closest('.panel');
+      panel.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      const textarea = document.getElementById('diff-text' + num);
+      const drop = document.getElementById('drop' + num);
+      if (mode === 'text') {
+        textarea.style.display = 'block';
+        drop.classList.remove('visible');
+      } else {
+        textarea.style.display = 'none';
+        drop.classList.add('visible');
+      }
+    }
+
+    function parseJsonInstagram(raw) {
+      try {
+        const data = JSON.parse(raw);
+        const values = [];
+        const arr = Array.isArray(data) ? data : [data];
+        arr.forEach(item => {
+          if (item.string_list_data) {
+            item.string_list_data.forEach(entry => {
+              if (entry.value) values.push(entry.value.trim());
+            });
+          }
+        });
+        return values;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function onFileChange(event, num) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const values = parseJsonInstagram(e.target.result);
+        if (!values || values.length === 0) {
+          alert('JSON 파싱 실패: 올바른 인스타그램 JSON 파일인지 확인해주세요.');
+          return;
+        }
+        jsonData[num] = values;
+        const el = document.getElementById('file' + num + '-loaded');
+        el.textContent = '✓ ' + file.name + ' — ' + values.length + '명 로드됨';
+        el.classList.add('show');
+      };
+      reader.readAsText(file);
+    }
+
+    function onDragOver(event, id) {
+      event.preventDefault();
+      document.getElementById(id).classList.add('dragover');
+    }
+
+    function onDragLeave(id) {
+      document.getElementById(id).classList.remove('dragover');
+    }
+
+    function onDrop(event, num) {
+      event.preventDefault();
+      onDragLeave('drop' + num);
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      const fakeEvent = { target: { files: [file] } };
+      onFileChange(fakeEvent, num);
+    }
+
     function parseText(text) {
       return text.split(/[\n,]/).map(s => s.trim()).filter(s => s.length > 0);
     }
 
+    function getListForSide(num) {
+      const textarea = document.getElementById('diff-text' + num);
+      if (textarea.style.display !== 'none') {
+        return parseText(textarea.value);
+      } else {
+        return jsonData[num] || [];
+      }
+    }
+
     function runDiff() {
-      const a = parseText(document.getElementById('diff-text1').value);
-      const b = parseText(document.getElementById('diff-text2').value);
+      const a = getListForSide('1');
+      const b = getListForSide('2');
+      if (a.length === 0 && b.length === 0) return;
       const setB = new Set(b);
       const diff = a.filter(item => !setB.has(item));
       const panel = document.getElementById('diffResult');
@@ -431,7 +592,7 @@
       panel.classList.add('show');
       document.getElementById('diffCount').textContent = diff.length + '개';
       if (diff.length === 0) {
-        box.innerHTML = '<span class="empty">차이 없음 — 모든 항목이 두 번째 텍스트에 존재합니다.</span>';
+        box.innerHTML = '<span class="empty">차이 없음 — 모든 항목이 두 번째에 존재합니다.</span>';
       } else {
         box.textContent = diff.join('\n');
       }
@@ -440,6 +601,14 @@
     function resetDiff() {
       document.getElementById('diff-text1').value = '';
       document.getElementById('diff-text2').value = '';
+      jsonData['1'] = null;
+      jsonData['2'] = null;
+      ['1','2'].forEach(n => {
+        const el = document.getElementById('file' + n + '-loaded');
+        el.textContent = '';
+        el.classList.remove('show');
+        document.getElementById('file' + n).value = '';
+      });
       document.getElementById('diffResult').classList.remove('show');
     }
 
