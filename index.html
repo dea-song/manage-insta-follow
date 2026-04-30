@@ -520,10 +520,23 @@
         const values = [];
         const arr = Array.isArray(data) ? data : [data];
         arr.forEach(item => {
-          if (item.string_list_data) {
-            item.string_list_data.forEach(entry => {
-              if (entry.value) values.push(entry.value.trim());
-            });
+          // 형식 1: string_list_data[].value 에 아이디가 있는 경우
+          if (item.string_list_data && item.string_list_data.length > 0) {
+            const entry = item.string_list_data[0];
+            if (entry.value && entry.value.trim()) {
+              values.push(entry.value.trim());
+              return;
+            }
+            // 형식 2: string_list_data에 value 없고 title에 아이디가 있는 경우
+            // href에서 아이디 추출 시도
+            if (entry.href) {
+              const match = entry.href.match(/instagram\.com\/_u\/([^/?]+)/);
+              if (match) { values.push(match[1].trim()); return; }
+            }
+          }
+          // 형식 2 fallback: title에 아이디가 있는 경우
+          if (item.title && item.title.trim()) {
+            values.push(item.title.trim());
           }
         });
         return values;
